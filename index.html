@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta property="og:title" content="I made this for you..." />
+<meta property="og:description" content="A small digital surprise. Open on mobile!" />
+<meta property="og:image" content="https://i.imgur.com/W60bKkF.png" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Secure Message</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #00ff41; /* Hacker Green */
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+            user-select: none;
+            -webkit-user-select: none; /* Disables text selection */
+        }
+
+        /* The Locked Screen UI */
+        #lock-screen {
+            transition: opacity 0.5s;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px #00ff41;
+        }
+
+        /* The Fingerprint Area */
+        .scan-area {
+            position: relative;
+            width: 120px;
+            height: 150px;
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            border-radius: 20px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        /* The Simulated Fingerprint Graphic */
+        .fingerprint {
+            width: 80px;
+            height: 100px;
+            background: repeating-linear-gradient(
+                180deg,
+                transparent,
+                transparent 4px,
+                rgba(0, 255, 65, 0.5) 5px,
+                rgba(0, 255, 65, 0.5) 7px
+            );
+            border-radius: 50% 50% 40% 40%;
+            opacity: 0.6;
+            filter: blur(1px);
+        }
+
+        /* The Scanning Laser Line */
+        .laser {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #00ff41;
+            box-shadow: 0 0 15px #00ff41;
+            display: none; /* Hidden until scanning */
+            animation: scan 1.5s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        .instruction {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.3; }
+        }
+
+        /* The Hidden Message UI */
+        #content {
+            display: none; /* Hidden initially */
+            animation: fadeIn 1s ease forwards;
+            max-width: 80%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            margin-bottom: 10px;
+        }
+        
+        p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .heart {
+            font-size: 3rem;
+            margin-top: 20px;
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.3); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.15); }
+            60% { transform: scale(1); }
+        }
+
+        /* Loading Bar */
+        .progress-bar {
+            width: 0%;
+            height: 5px;
+            background-color: #00ff41;
+            margin-top: 10px;
+            transition: width 0.1s;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="lock-screen">
+        <div class="status" id="status-text">SYSTEM LOCKED</div>
+        
+        <div class="scan-area" id="scanner">
+            <div class="fingerprint"></div>
+            <div class="laser" id="laser"></div>
+        </div>
+        <div class="progress-bar" id="bar"></div>
+
+        <div class="instruction">HOLD THUMB TO SCAN</div>
+    </div>
+
+    <div id="content">
+        <h1>ACCESS GRANTED</h1>
+        <p>Identity Verified: <b>The Cutest Girl in The World</b></p>
+        <hr style="border: 1px solid #333; width: 50%; margin: 20px auto;">
+        
+        <p>
+            Hey Cutie,<br><br>
+            I tried to code a firewall around my heart,<br>
+            but you bypassed it completely.<br><br>
+            Are you free this weekend?
+        </p>
+        <div class="heart">❤️</div>
+    </div>
+
+    <script>
+        const scanner = document.getElementById('scanner');
+        const laser = document.getElementById('laser');
+        const bar = document.getElementById('bar');
+        const statusText = document.getElementById('status-text');
+        const lockScreen = document.getElementById('lock-screen');
+        const content = document.getElementById('content');
+
+        let scanInterval;
+        let progress = 0;
+        let isScanning = false;
+
+        // EVENTS for Mobile (Touch) and PC (Mouse)
+        scanner.addEventListener('touchstart', startScan);
+        scanner.addEventListener('touchend', stopScan);
+        scanner.addEventListener('mousedown', startScan); // For testing on PC
+        scanner.addEventListener('mouseup', stopScan);
+
+        function startScan(e) {
+            if(e) e.preventDefault(); // Prevents ghost clicks on mobile
+            isScanning = true;
+            laser.style.display = 'block';
+            statusText.innerText = "SCANNING BIOMETRICS...";
+            statusText.style.color = "#fff";
+
+            // Haptic Feedback (Vibration)
+            if (navigator.vibrate) {
+                navigator.vibrate(50); // Small buzz when touch starts
+            }
+
+            // Start the loading bar
+            scanInterval = setInterval(() => {
+                if (progress >= 100) {
+                    unlock();
+                } else {
+                    progress += 2; // Speed of scan
+                    bar.style.width = progress + "%";
+                    
+                    // Vibrate slightly during scan to feel 'techy'
+                    if (progress % 20 === 0 && navigator.vibrate) {
+                        navigator.vibrate(10); 
+                    }
+                }
+            }, 30); // 30ms * 50 steps = 1.5 seconds to unlock
+        }
+
+        function stopScan() {
+            if (!isScanning) return;
+            isScanning = false;
+            
+            // If they let go too early
+            clearInterval(scanInterval);
+            progress = 0;
+            bar.style.width = "0%";
+            laser.style.display = 'none';
+            statusText.innerText = "ACCESS DENIED";
+            statusText.style.color = "red";
+            
+            setTimeout(() => {
+                statusText.innerText = "SYSTEM LOCKED";
+                statusText.style.color = "#00ff41";
+            }, 1000);
+        }
+
+        function unlock() {
+            clearInterval(scanInterval);
+            isScanning = false; // Prevent stopScan from triggering reset
+            
+            // Success Haptics
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]); // Buzz-pause-Buzz
+            }
+
+            statusText.innerText = "MATCH FOUND";
+            
+            setTimeout(() => {
+                // Fade out lock screen
+                lockScreen.style.opacity = '0';
+                setTimeout(() => {
+                    lockScreen.style.display = 'none';
+                    content.style.display = 'block';
+                }, 500);
+            }, 500);
+        }
+    </script>
+</body>
+</html>
